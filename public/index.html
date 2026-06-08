@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>卓越信通 — 客户AI需求调研问卷</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><svg width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="8" fill="#4F46E5"/><path d="M10 26V14M18 26V10M26 26V18" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <h2>AI需求调研</h2>
+    </div>
+    <nav class="step-nav" id="stepNav"></nav>
+    <div class="sidebar-footer"><a href="admin.html" class="admin-link">管理后台</a></div>
+  </aside>
+
+  <main class="main-content">
+    <header class="survey-header">
+      <h1>卓越信通 — 轨道交通 & 新能源行业<br>客户AI需求调研问卷</h1>
+      <div class="header-desc">
+        <p>尊敬的客户，感谢您参与本次调研。卓越信通深耕工业通信领域，正在探索AI技术与工业通信设备的融合应用。本问卷旨在了解您在轨道交通/新能源运营中的实际需求与痛点，以便我们提供更贴合的AI+通信解决方案。</p>
+        <p class="highlight">所有信息仅用于产品规划，严格保密。</p>
+      </div>
+    </header>
+
+    <form id="surveyForm" novalidate>
+
+      <!-- 第一部分：基本信息 -->
+      <section class="form-section active" data-step="1">
+        <div class="section-title-bar"><span class="step-num">1</span><h2>基本信息</h2></div>
+        <div class="form-group">
+          <label class="required">单位名称</label>
+          <input type="text" name="companyName" placeholder="请输入单位名称" required>
+          <span class="error-msg"></span>
+        </div>
+        <div class="form-group">
+          <label class="required">所属行业</label>
+          <div class="radio-group inline">
+            <label class="radio-item"><input type="radio" name="industry" value="轨道交通" required><span class="radio-mark"></span><span>轨道交通</span></label>
+            <label class="radio-item"><input type="radio" name="industry" value="新能源"><span class="radio-mark"></span><span>新能源</span></label>
+          </div>
+          <span class="error-msg"></span>
+        </div>
+        <div class="form-group conditional" id="railSubGroup" data-show-when="industry=轨道交通">
+          <label>轨道交通细分</label>
+          <div class="checkbox-group inline">
+            <label class="checkbox-item"><input type="checkbox" name="railSub" value="国铁"><span class="checkbox-mark"></span><span>国铁</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="railSub" value="城轨/地铁"><span class="checkbox-mark"></span><span>城轨/地铁</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="railSub" value="市域铁路"><span class="checkbox-mark"></span><span>市域铁路</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="railSub" value="有轨电车"><span class="checkbox-mark"></span><span>有轨电车</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="railSub" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="railSubOther" placeholder="请说明" class="other-input" data-trigger="railSub" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-group conditional" id="energySubGroup" data-show-when="industry=新能源">
+          <label>新能源细分</label>
+          <div class="checkbox-group inline">
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="风电"><span class="checkbox-mark"></span><span>风电</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="光伏"><span class="checkbox-mark"></span><span>光伏</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="储能"><span class="checkbox-mark"></span><span>储能</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="充电桩/换电"><span class="checkbox-mark"></span><span>充电桩/换电</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="氢能"><span class="checkbox-mark"></span><span>氢能</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="综合能源"><span class="checkbox-mark"></span><span>综合能源</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="energySub" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="energySubOther" placeholder="请说明" class="other-input" data-trigger="energySub" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-group">
+          <label>您的部门</label>
+          <div class="checkbox-group inline">
+            <label class="checkbox-item"><input type="checkbox" name="department" value="运营调度/生产"><span class="checkbox-mark"></span><span>运营调度/生产</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="机电/通号/电气"><span class="checkbox-mark"></span><span>机电/通号/电气</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="信息化/IT"><span class="checkbox-mark"></span><span>信息化/IT</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="安全监测"><span class="checkbox-mark"></span><span>安全监测</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="设备维护"><span class="checkbox-mark"></span><span>设备维护</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="工程建设"><span class="checkbox-mark"></span><span>工程建设</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="department" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="departmentOther" placeholder="请说明" class="other-input" data-trigger="department" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>您的职务</label><input type="text" name="position" placeholder="请输入您的职务"></div>
+          <div class="form-group"><label>联系方式（可选）</label><input type="text" name="contactInfo" placeholder="手机/邮箱"></div>
+        </div>
+      </section>
+
+      <!-- 第二部分：当前AI应用现状 -->
+      <section class="form-section" data-step="2">
+        <div class="section-title-bar"><span class="step-num">2</span><h2>当前AI应用现状</h2></div>
+        <div class="form-group">
+          <label class="required">1. 贵单位目前是否已部署AI相关应用？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="aiDeployment" value="已部署，运行中" required><span class="radio-mark"></span><span>已部署，运行中</span></label>
+            <input type="text" name="aiDeploymentDesc" placeholder="请简述" class="sub-input" data-trigger="aiDeployment" data-trigger-val="已部署，运行中" style="display:none">
+            <label class="radio-item"><input type="radio" name="aiDeployment" value="正在试点/测试中"><span class="radio-mark"></span><span>正在试点/测试中</span></label>
+            <label class="radio-item"><input type="radio" name="aiDeployment" value="已规划，尚未实施"><span class="radio-mark"></span><span>已规划，尚未实施</span></label>
+            <label class="radio-item"><input type="radio" name="aiDeployment" value="暂无计划，但有关注"><span class="radio-mark"></span><span>暂无计划，但有关注</span></label>
+            <label class="radio-item"><input type="radio" name="aiDeployment" value="暂无关注"><span class="radio-mark"></span><span>暂无关注</span></label>
+          </div>
+          <span class="error-msg"></span>
+        </div>
+        <div class="form-group">
+          <label>2. 若已部署或试点，主要应用在哪些场景？（多选）</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="视频监控智能分析"><span class="checkbox-mark"></span><span>视频监控智能分析（异物入侵、人员行为识别、安全帽检测等）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="设备故障预测与健康管理"><span class="checkbox-mark"></span><span>设备故障预测与健康管理（PHM）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="智能调度与运力/发电优化"><span class="checkbox-mark"></span><span>智能调度与运力/发电优化</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="乘客/客户服务"><span class="checkbox-mark"></span><span>乘客/客户服务（客流预测、智能客服、用户画像等）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="灾害预警与应急响应"><span class="checkbox-mark"></span><span>灾害预警与应急响应</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="能耗管理与节能优化"><span class="checkbox-mark"></span><span>能耗管理与节能优化</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="功率预测与并网管理"><span class="checkbox-mark"></span><span>功率预测与并网管理（新能源）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="场站智能巡检"><span class="checkbox-mark"></span><span>场站/风机/光伏阵列智能巡检（无人机/机器人巡检）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="currentAiScenes" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="currentAiScenesOther" placeholder="请说明" class="other-input" data-trigger="currentAiScenes" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-group">
+          <label>3. 当前AI应用中遇到的主要问题是什么？（多选，最多3项）</label>
+          <div class="checkbox-group" data-max-select="3">
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="边缘侧算力不足"><span class="checkbox-mark"></span><span>边缘侧算力不足，推理延迟高</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="网络带宽不够"><span class="checkbox-mark"></span><span>网络带宽不够，视频/数据传输卡顿</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="缺乏与工业通信网络融合方案"><span class="checkbox-mark"></span><span>缺乏与现有工业通信网络的融合方案</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="AI模型精度不满足"><span class="checkbox-mark"></span><span>AI模型精度不满足业务要求</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="数据采集不完整"><span class="checkbox-mark"></span><span>数据采集不完整，训练样本不足</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="偏远场站通信不稳定"><span class="checkbox-mark"></span><span>偏远场站通信链路不稳定，数据回传困难</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="缺乏行业标准"><span class="checkbox-mark"></span><span>缺乏行业标准和评估体系</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="建设成本高ROI不清晰"><span class="checkbox-mark"></span><span>建设成本高，ROI不清晰</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="运维复杂"><span class="checkbox-mark"></span><span>运维复杂，专业人员不足</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiProblems" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="aiProblemsOther" placeholder="请说明" class="other-input" data-trigger="aiProblems" data-trigger-val="其他" style="display:none">
+          <span class="error-msg"></span>
+        </div>
+      </section>
+
+      <!-- 第三部分：AI需求优先级 -->
+      <section class="form-section" data-step="3">
+        <div class="section-title-bar"><span class="step-num">3</span><h2>AI需求优先级</h2></div>
+        <div class="form-group">
+          <label>4. 以下AI场景，请按需求紧迫程度打分（1=不需要，5=非常迫切）</label>
+          <p class="sub-label">— 轨道交通场景 —</p>
+          <div class="rating-group" id="railRatings"></div>
+          <p class="sub-label">— 新能源场景 —</p>
+          <div class="rating-group" id="energyRatings"></div>
+        </div>
+        <div class="form-group">
+          <label class="required">5. 您最希望AI优先解决的一个核心痛点是：</label>
+          <textarea name="corePainPoint" placeholder="请详细描述..." rows="3" required></textarea>
+          <span class="error-msg"></span>
+        </div>
+      </section>
+
+      <!-- 第四部分：部署与通信需求 -->
+      <section class="form-section" data-step="4">
+        <div class="section-title-bar"><span class="step-num">4</span><h2>部署与通信需求</h2></div>
+        <div class="form-group">
+          <label>6. 贵单位目前站段/线路/场站的网络带宽情况？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="networkBandwidth" value="百兆以太网为主"><span class="radio-mark"></span><span>百兆以太网为主</span></label>
+            <label class="radio-item"><input type="radio" name="networkBandwidth" value="千兆以太网为主"><span class="radio-mark"></span><span>千兆以太网为主</span></label>
+            <label class="radio-item"><input type="radio" name="networkBandwidth" value="部分已升级万兆"><span class="radio-mark"></span><span>部分已升级万兆</span></label>
+            <label class="radio-item"><input type="radio" name="networkBandwidth" value="仅有无线/4G/5G回传"><span class="radio-mark"></span><span>部分场站仅有无线/4G/5G回传</span></label>
+            <label class="radio-item"><input type="radio" name="networkBandwidth" value="不清楚"><span class="radio-mark"></span><span>不清楚</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>7. 视频回传是否遇到带宽瓶颈？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="videoBottleneck" value="非常严重"><span class="radio-mark"></span><span>是，非常严重（经常丢帧/卡顿）</span></label>
+            <label class="radio-item"><input type="radio" name="videoBottleneck" value="偶尔有"><span class="radio-mark"></span><span>偶尔有，高峰时段较明显</span></label>
+            <label class="radio-item"><input type="radio" name="videoBottleneck" value="基本没有"><span class="radio-mark"></span><span>基本没有</span></label>
+            <label class="radio-item"><input type="radio" name="videoBottleneck" value="暂无大规模需求"><span class="radio-mark"></span><span>暂无大规模视频回传需求</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>8. 对"边缘侧AI推理"（数据就地处理，仅上传结果）的接受度？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="edgeAiAcceptance" value="非常认可"><span class="radio-mark"></span><span>非常认可，已经在规划</span></label>
+            <label class="radio-item"><input type="radio" name="edgeAiAcceptance" value="比较感兴趣"><span class="radio-mark"></span><span>比较感兴趣，想了解更多</span></label>
+            <label class="radio-item"><input type="radio" name="edgeAiAcceptance" value="需看效果"><span class="radio-mark"></span><span>一般，需看效果和成本</span></label>
+            <label class="radio-item"><input type="radio" name="edgeAiAcceptance" value="倾向集中处理"><span class="radio-mark"></span><span>不太考虑，更倾向集中处理</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>9. 若有一款"工业交换机+AI推理"一体化设备，您最看重哪些能力？（多选，最多3项）</label>
+          <div class="checkbox-group" data-max-select="3">
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="内置AI推理芯片"><span class="checkbox-mark"></span><span>内置AI推理芯片，支持主流模型部署</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="视频编码压缩"><span class="checkbox-mark"></span><span>视频编码压缩（大幅降低带宽占用）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="工业级可靠性"><span class="checkbox-mark"></span><span>工业级可靠性（宽温、抗震、冗余）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="与现有网络无缝对接"><span class="checkbox-mark"></span><span>与现有网络无缝对接</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="远程模型更新与运维管理"><span class="checkbox-mark"></span><span>远程模型更新与运维管理</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="开放API支持二次开发"><span class="checkbox-mark"></span><span>开放API，支持二次开发</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="符合铁路/城轨安全认证"><span class="checkbox-mark"></span><span>符合铁路/城轨安全认证</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="适配新能源场站环境"><span class="checkbox-mark"></span><span>适配新能源场站环境（防雷、耐腐蚀、宽温）</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="aiSwitchPriority" value="其他"><span class="checkbox-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="aiSwitchPriorityOther" placeholder="请说明" class="other-input" data-trigger="aiSwitchPriority" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-group">
+          <label>10. 您期望的AI设备部署形态是？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="deployForm" value="替换现有交换机"><span class="radio-mark"></span><span>替换现有交换机，一步到位</span></label>
+            <label class="radio-item"><input type="radio" name="deployForm" value="独立AI推理盒"><span class="radio-mark"></span><span>作为独立AI推理盒，旁挂现有网络</span></label>
+            <label class="radio-item"><input type="radio" name="deployForm" value="模块化插卡"><span class="radio-mark"></span><span>模块化插卡，按需扩展</span></label>
+            <label class="radio-item"><input type="radio" name="deployForm" value="室外柜/杆装部署"><span class="radio-mark"></span><span>室外柜/杆装部署（新能源场站场景）</span></label>
+            <label class="radio-item"><input type="radio" name="deployForm" value="都可以"><span class="radio-mark"></span><span>都可以，看具体方案</span></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 第五部分：采购与合作意向 -->
+      <section class="form-section" data-step="5">
+        <div class="section-title-bar"><span class="step-num">5</span><h2>采购与合作意向</h2></div>
+        <div class="form-group">
+          <label>11. AI相关项目的预算规模大致在？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="budget" value="50万以下"><span class="radio-mark"></span><span>50万以下</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="50-200万"><span class="radio-mark"></span><span>50-200万</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="200-500万"><span class="radio-mark"></span><span>200-500万</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="500万以上"><span class="radio-mark"></span><span>500万以上</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="尚未明确预算"><span class="radio-mark"></span><span>尚未明确预算</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>12. 预期的项目落地时间？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="timeline" value="半年内"><span class="radio-mark"></span><span>半年内</span></label>
+            <label class="radio-item"><input type="radio" name="timeline" value="1年内"><span class="radio-mark"></span><span>1年内</span></label>
+            <label class="radio-item"><input type="radio" name="timeline" value="1-2年"><span class="radio-mark"></span><span>1-2年</span></label>
+            <label class="radio-item"><input type="radio" name="timeline" value="2年以上"><span class="radio-mark"></span><span>2年以上</span></label>
+            <label class="radio-item"><input type="radio" name="timeline" value="视方案而定"><span class="radio-mark"></span><span>视方案而定</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>13. 您更倾向的合作模式是？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="coopMode" value="整体解决方案交钥匙"><span class="radio-mark"></span><span>整体解决方案交钥匙</span></label>
+            <label class="radio-item"><input type="radio" name="coopMode" value="提供硬件平台联合开发"><span class="radio-mark"></span><span>提供硬件平台，联合开发AI应用</span></label>
+            <label class="radio-item"><input type="radio" name="coopMode" value="提供硬件+参考方案自主集成"><span class="radio-mark"></span><span>提供硬件+参考方案，自主集成</span></label>
+            <label class="radio-item"><input type="radio" name="coopMode" value="其他"><span class="radio-mark"></span><span>其他</span></label>
+          </div>
+          <input type="text" name="coopModeOther" placeholder="请说明" class="other-input" data-trigger="coopMode" data-trigger-val="其他" style="display:none">
+        </div>
+        <div class="form-group">
+          <label>14. 是否愿意参与试点/联合验证项目？</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="pilotWilling" value="愿意"><span class="radio-mark"></span><span>愿意，可提供测试环境</span></label>
+            <label class="radio-item"><input type="radio" name="pilotWilling" value="需要内部评估"><span class="radio-mark"></span><span>需要内部评估</span></label>
+            <label class="radio-item"><input type="radio" name="pilotWilling" value="暂不方便"><span class="radio-mark"></span><span>暂不方便</span></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 第六部分：开放性问题 -->
+      <section class="form-section" data-step="6">
+        <div class="section-title-bar"><span class="step-num">6</span><h2>开放性问题</h2></div>
+        <div class="form-group">
+          <label>15. 在行业AI落地方面，您最大的顾虑是什么？</label>
+          <textarea name="aiConcerns" placeholder="请自由表达您的看法..." rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>16. 您对卓越信通在AI+工业通信方向有什么期待或建议？</label>
+          <textarea name="expectations" placeholder="请自由表达您的看法..." rows="4"></textarea>
+        </div>
+      </section>
+    </form>
+
+    <!-- 导航按钮 -->
+    <div class="form-nav">
+      <button type="button" id="prevBtn" class="btn btn-secondary" style="display:none">上一步</button>
+      <button type="button" id="nextBtn" class="btn btn-primary">下一步</button>
+      <button type="button" id="submitBtn" class="btn btn-primary" style="display:none">提交问卷</button>
+    </div>
+
+    <!-- 成功弹窗 -->
+    <div class="modal-overlay" id="successModal">
+      <div class="modal-content">
+        <div class="modal-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#10B981" stroke="#fff" stroke-width="3"/><path d="M20 32l8 8 16-16" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        <h3>提交成功！</h3>
+        <p>感谢您的参与，我们会认真对待每一份反馈。</p>
+        <button type="button" class="btn btn-primary" onclick="location.reload()">再填一份</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/@cloudbase/js-sdk@1.9.0/dist/cloudbase.full.js"></script>
+<script src="js/cloudbase-config.js"></script>
+<script src="js/survey.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+functions/
+data/
+cloudbaserc.json
+deploy_fn.log
+deploy.bat
+deploy.js
+DEPLOY.md
+server.js
+MinerU_markdown_*.md
+客户AI需求调研问卷.docx
+.codebuddy/

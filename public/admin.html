@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — AI需求调研问卷</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --primary: #4F46E5; --bg: #F1F5F9; --surface: #fff; --border: #E2E8F0; --text: #1E293B; --text-s: #64748B; --success: #10B981; --error: #EF4444; --radius: 10px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; background: var(--bg); color: var(--text); }
+    .top-bar { background: linear-gradient(135deg, #1E1B4B, #312E81); color: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .top-bar h1 { font-size: 18px; font-weight: 700; }
+    .top-bar a { color: #A5B4FC; text-decoration: none; font-size: 14px; }
+    .top-bar a:hover { color: #fff; }
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
+    .login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: var(--surface); border-radius: 16px; padding: 40px; width: 380px; max-width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,.1); text-align: center; }
+    .login-box h2 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
+    .login-box p { font-size: 13px; color: var(--text-s); margin-bottom: 24px; }
+    .login-box input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; text-align: center; margin-bottom: 16px; }
+    .login-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+    .login-box .login-btn { width: 100%; padding: 12px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 600; border: none; cursor: pointer; }
+    .login-box .login-btn:hover { background: #4338CA; }
+    .login-box .login-error { color: var(--error); font-size: 13px; margin-top: 12px; display: none; }
+    .admin-content { display: none; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .stat-card .label { font-size: 13px; color: var(--text-s); margin-bottom: 4px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .toolbar-left { display: flex; align-items: center; gap: 12px; }
+    .btn { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #4338CA; }
+    .btn-danger { background: #FEE2E2; color: var(--error); }
+    .btn-danger:hover { background: #FECACA; }
+    .btn-outline { background: #fff; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--bg); }
+    .search-box { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; width: 240px; }
+    .table-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #F8FAFC; padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text-s); border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid #F1F5F9; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tr:hover td { background: #FAFAFF; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .tag-rail { background: #EEF2FF; color: var(--primary); }
+    .tag-energy { background: #ECFDF5; color: var(--success); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-s); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: var(--surface); border-radius: 16px; max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,.15); }
+    .modal-box h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-box .close-btn { cursor: pointer; font-size: 20px; color: var(--text-s); background: none; border: none; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .detail-item { padding: 10px 0; border-bottom: 1px solid #F1F5F9; }
+    .detail-item.full { grid-column: 1 / -1; }
+    .detail-item .dk { font-size: 12px; color: var(--text-s); margin-bottom: 2px; }
+    .detail-item .dv { font-size: 14px; font-weight: 500; word-break: break-all; }
+    .pagination { display: flex; justify-content: center; gap: 4px; margin-top: 16px; }
+    .pagination button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; }
+    .pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h2>管理员登录</h2>
+      <p>请输入管理密码以访问后台</p>
+      <input type="password" id="adminPwdInput" placeholder="请输入管理密码" autocomplete="off">
+      <button class="login-btn" id="loginBtn">登 录</button>
+      <div class="login-error" id="loginError">密码错误，请重试</div>
+      <div style="margin-top:20px"><a href="index.html" style="color:var(--primary);font-size:13px;text-decoration:none">← 返回问卷填写页</a></div>
+    </div>
+  </div>
+
+  <div class="admin-content" id="adminContent">
+    <div class="top-bar">
+      <h1>AI需求调研 — 管理后台</h1>
+      <a href="index.html">← 返回问卷</a>
+    </div>
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">总提交数</div><div class="value" id="statTotal">-</div></div>
+        <div class="stat-card"><div class="label">今日新增</div><div class="value" id="statToday">-</div></div>
+        <div class="stat-card"><div class="label">轨道交通</div><div class="value" id="statRail">-</div></div>
+        <div class="stat-card"><div class="label">新能源</div><div class="value" id="statEnergy">-</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="btn btn-primary" onclick="exportCSV()">导出 CSV</button>
+          <button class="btn btn-danger" onclick="clearAll()">清空数据</button>
+          <button class="btn btn-outline" onclick="loadData()">刷新</button>
+        </div>
+        <input type="text" class="search-box" id="searchBox" placeholder="搜索公司名称..." oninput="filterData()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>序号</th><th>单位名称</th><th>行业</th><th>部门</th><th>AI部署状态</th><th>预算</th><th>提交时间</th><th>操作</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="8" class="empty-state">加载中...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-box">
+      <h2>问卷详情 <button class="close-btn" onclick="closeModal()">&times;</button></h2>
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@cloudbase/js-sdk@1.9.0/dist/cloudbase.full.js"></script>
+  <script src="js/cloudbase-config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

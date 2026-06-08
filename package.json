@@ -1,0 +1,20 @@
+{
+  "name": "ai-survey",
+  "version": "1.0.0",
+  "description": "客户AI需求调研问卷在线填写系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "deploy": "tcb fn deploy survey --force && tcb hosting deploy public -e",
+    "deploy:fn": "tcb fn deploy survey --force",
+    "deploy:hosting": "tcb hosting deploy public -e"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@cloudbase/cli": "^1.10.0"
+  }
+}
