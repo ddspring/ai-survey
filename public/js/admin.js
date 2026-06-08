@@ -129,10 +129,10 @@ async function callAPI(action, data) {
       const opts = { method: route.method, headers: { 'Content-Type': 'application/json' } };
       if (action === 'submit') opts.body = JSON.stringify(data);
       const res = await fetch(route.url, opts);
-      return res.json();
+      if (res.ok) return res.json();
+      throw new Error('Express API 返回错误: ' + res.status);
     } catch (e) {
-      console.warn('Express API 不可用，切换本地存储:', e.message);
-      useLocalStorage = true;
+      console.warn('Express API 不可用，切换到本地存储:', e.message);
     }
   }
 
@@ -162,7 +162,7 @@ async function doLogin() {
 
 function showAdmin() {
   document.getElementById('loginOverlay').style.display = 'none';
-  document.getElementById('adminContent').style.display = '';
+  document.getElementById('adminContent').style.display = 'block';
   loadData();
 }
 
