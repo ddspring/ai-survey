@@ -4,6 +4,7 @@ const PAGE_SIZE = 15;
 let tcbApp = null;
 let authReady = false;
 let adminPwd = '';
+let useLocalStorage = false;
 
 const FIELD_LABELS = {
   companyName: '单位名称', industry: '所属行业', railSub: '轨道交通细分', energySub: '新能源细分',
@@ -29,7 +30,10 @@ const RATING_LABELS = {
 };
 
 async function initCloudBase() {
-  if (typeof cloudbase === 'undefined' || typeof CLOUDBASE_ENV_ID === 'undefined' || CLOUDBASE_ENV_ID === 'your-env-id') return false;
+  if (typeof cloudbase === 'undefined' || typeof CLOUDBASE_ENV_ID === 'undefined' || CLOUDBASE_ENV_ID === 'your-env-id') {
+    useLocalStorage = true;
+    return false;
+  }
   try {
     tcbApp = cloudbase.init({ env: CLOUDBASE_ENV_ID });
     const auth = tcbApp.auth();
@@ -37,30 +41,102 @@ async function initCloudBase() {
     authReady = true;
     return true;
   } catch (e) {
-    console.warn('CloudBase 初始化失败，将使用本地API', e);
+    console.warn('CloudBase 初始化失败，使用本地存储:', e.message);
+    useLocalStorage = true;
     return false;
+  }
+}
+
+// localStorage API
+function localAPI(action, data) {
+  const STORAGE_KEY = 'ai_survey_data';
+  function getAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  }
+  function saveAll(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+  switch (action) {
+    case 'submit': {
+      const all = getAll();
+      const record = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), submittedAt: new Date().toISOString() };
+      all.push(record);
+      saveAll(all);
+      return { success: true, data: record };
+    }
+    case 'list':
+      return { success: true, data: getAll() };
+    case 'stats': {
+      const all = getAll();
+      const today = new Date().toISOString().slice(0, 10);
+      const byIndustry = {};
+      all.forEach(d => { if (d.industry) byIndustry[d.industry] = (byIndustry[d.industry] || 0) + 1; });
+      return { success: true, data: { total: all.length, today: all.filter(d => d.submittedAt && d.submittedAt.startsWith(today)).length, byIndustry } };
+    }
+    case 'delete': {
+      let all = getAll();
+      all = all.filter(d => (d._id || d.id) !== (data && data.id));
+      saveAll(all);
+      return { success: true };
+    }
+    case 'clear':
+      saveAll([]);
+      return { success: true };
+    case 'export': {
+      const all = getAll();
+      if (all.length === 0) return { success: false, error: '暂无数据' };
+      const allKeys = new Set();
+      all.forEach(d => Object.keys(d).forEach(k => allKeys.add(k)));
+      const keys = [...allKeys];
+      let csv = '\uFEFF' + keys.join(',') + '\n';
+      all.forEach(d => {
+        csv += keys.map(k => {
+          let v = d[k];
+          if (Array.isArray(v)) v = v.join(';');
+          if (v === undefined || v === null) v = '';
+          return '"' + String(v).replace(/"/g, '""') + '"';
+        }).join(',') + '\n';
+      });
+      return { success: true, csv, filename: 'survey_export_' + new Date().toISOString().slice(0, 10) + '.csv' };
+    }
+    default:
+      return { success: false, error: 'Unknown action' };
   }
 }
 
 async function callAPI(action, data) {
   if (authReady && tcbApp) {
-    const result = await tcbApp.callFunction({ name: 'survey', data: { action, data, adminPwd } });
-    return result.result;
+    try {
+      const result = await tcbApp.callFunction({ name: 'survey', data: { action, data, adminPwd } });
+      return result.result;
+    } catch (e) {
+      console.warn('云函数调用失败，切换本地存储:', e.message);
+      useLocalStorage = true;
+    }
   }
-  const routes = {
-    submit: { method: 'POST', url: '/api/surveys' },
-    list:   { method: 'GET',  url: '/api/surveys' },
-    stats:  { method: 'GET',  url: '/api/surveys/stats' },
-    delete: { method: 'DELETE', url: '/api/surveys/' + (data ? data.id : '') },
-    clear:  { method: 'DELETE', url: '/api/surveys' },
-    export: { method: 'GET',  url: '/api/surveys/export/csv' },
-  };
-  const route = routes[action];
-  if (!route) throw new Error('Unknown action');
-  const opts = { method: route.method, headers: { 'Content-Type': 'application/json' } };
-  if (action === 'submit') opts.body = JSON.stringify(data);
-  const res = await fetch(route.url, opts);
-  return res.json();
+
+  if (!useLocalStorage) {
+    try {
+      const routes = {
+        submit: { method: 'POST', url: '/api/surveys' },
+        list:   { method: 'GET',  url: '/api/surveys' },
+        stats:  { method: 'GET',  url: '/api/surveys/stats' },
+        delete: { method: 'DELETE', url: '/api/surveys/' + (data ? data.id : '') },
+        clear:  { method: 'DELETE', url: '/api/surveys' },
+        export: { method: 'GET',  url: '/api/surveys/export/csv' },
+      };
+      const route = routes[action];
+      if (!route) throw new Error('Unknown action');
+      const opts = { method: route.method, headers: { 'Content-Type': 'application/json' } };
+      if (action === 'submit') opts.body = JSON.stringify(data);
+      const res = await fetch(route.url, opts);
+      return res.json();
+    } catch (e) {
+      console.warn('Express API 不可用，切换本地存储:', e.message);
+      useLocalStorage = true;
+    }
+  }
+
+  return localAPI(action, data);
 }
 
 // 管理员登录
@@ -79,7 +155,9 @@ async function doLogin() {
     } else {
       if (pwd === 'zx2024ai') { showAdmin(); } else { showLoginError(); }
     }
-  } catch (e) { showLoginError(); }
+  } catch (e) {
+    if (pwd === 'zx2024ai') { showAdmin(); } else { showLoginError(); }
+  }
 }
 
 function showAdmin() {
@@ -221,17 +299,13 @@ async function clearAll() {
 
 async function exportCSV() {
   try {
-    if (authReady && tcbApp) {
-      const result = await callAPI('export');
-      if (!result.success) { alert(result.error || '导出失败'); return; }
-      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = result.filename || 'survey_export.csv'; a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      window.open('/api/surveys/export/csv', '_blank');
-    }
+    const result = await callAPI('export');
+    if (!result.success) { alert(result.error || '导出失败'); return; }
+    const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = result.filename || 'survey_export.csv'; a.click();
+    URL.revokeObjectURL(url);
   } catch (e) { alert('导出失败：' + e.message); }
 }
 
