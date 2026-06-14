@@ -309,6 +309,9 @@
       if (validateStep(currentStep)) goToStep(currentStep + 1);
     });
     document.getElementById('submitBtn').addEventListener('click', submitSurvey);
+    document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+      document.getElementById('successModal').classList.remove('show');
+    });
   }
 
   if (document.readyState === 'loading') {
