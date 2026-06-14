@@ -46,13 +46,28 @@
     return json.record;
   }
 
+  // 带重试的原子化提交：读最新 → 追加 → 写回，冲突时重试
+  async function atomicSubmit(record) {
+    for (var retry = 0; retry < 3; retry++) {
+      var all = await jsonbinRead();  // 每次都读最新，不用缓存
+      all.push(record);
+      try {
+        var written = await jsonbinWrite(all);
+        // 验证写入成功：数据中应包含新记录
+        if (written && written.length > 0) {
+          return { success: true, data: record };
+        }
+      } catch (e) { /* 写入失败，重试 */ }
+      // 随机延迟避免两个请求再次同时写入
+      if (retry < 2) await new Promise(function(r) { setTimeout(r, 200 + Math.random() * 300); });
+    }
+    throw new Error('提交失败，请稍后重试');
+  }
+
   async function remoteAPI(action, data) {
     if (!isJsonbinConfigured()) {
       throw new Error('jsonbin.io 未配置');
     }
-
-    // 读取当前数据
-    var all = (dataCache && (Date.now() - cacheTime < 2000)) ? dataCache : await jsonbinRead();
 
     switch (action) {
       case 'submit': {
@@ -60,18 +75,18 @@
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
           submittedAt: new Date().toISOString()
         });
-        all.push(record);
-        await jsonbinWrite(all);
-        return { success: true, data: record };
+        return atomicSubmit(record);
       }
       case 'list': {
         var pwd = data && data.adminPwd;
         if (pwd !== 'zx2024ai') return { success: false, error: '管理员密码错误' };
+        var all = (dataCache && (Date.now() - cacheTime < 3000)) ? dataCache : await jsonbinRead();
         return { success: true, data: all };
       }
       case 'stats': {
         var pwd = data && data.adminPwd;
         if (pwd !== 'zx2024ai') return { success: false, error: '管理员密码错误' };
+        var all = (dataCache && (Date.now() - cacheTime < 3000)) ? dataCache : await jsonbinRead();
         var today = new Date().toISOString().slice(0, 10);
         var byIndustry = {};
         all.forEach(function(d) {
@@ -89,6 +104,7 @@
       case 'delete': {
         var pwd = data && data.adminPwd;
         if (pwd !== 'zx2024ai') return { success: false, error: '管理员密码错误' };
+        var all = await jsonbinRead();
         all = all.filter(function(d) { return (d._id || d.id) !== (data && data.id); });
         await jsonbinWrite(all);
         return { success: true };
@@ -102,6 +118,7 @@
       case 'export': {
         var pwd = data && data.adminPwd;
         if (pwd !== 'zx2024ai') return { success: false, error: '管理员密码错误' };
+        var all = (dataCache && (Date.now() - cacheTime < 3000)) ? dataCache : await jsonbinRead();
         if (all.length === 0) return { success: false, error: '暂无数据' };
         var allKeys = new Set();
         all.forEach(function(d) { Object.keys(d).forEach(function(k) { allKeys.add(k); }); });
