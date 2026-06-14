@@ -3,9 +3,6 @@
   const STEP_NAMES = ['基本信息', 'AI应用现状', 'AI需求优先级', '部署与通信', '采购与合作', '开放性问题'];
   const TOTAL_STEPS = 6;
   let currentStep = 1;
-  let tcbApp = null;
-  let authReady = false;
-  let useLocalStorage = false;
 
   const railScenes = [
     { name: 'rail_videoAnalysis', label: '轨旁/车载视频智能分析（入侵检测、烟火识别、司机状态监测等）' },
@@ -25,101 +22,6 @@
     { name: 'energy_chargingOps', label: '充电桩/换电站智能运维与负荷调度' },
     { name: 'energy_edgeComm', label: '偏远场站边缘AI+通信一体化（弱网环境下就地推理+压缩回传）' },
   ];
-
-  // 初始化 CloudBase
-  async function initCloudBase() {
-    if (typeof cloudbase === 'undefined' || typeof CLOUDBASE_ENV_ID === 'undefined' || CLOUDBASE_ENV_ID === 'your-env-id') return false;
-    try {
-      tcbApp = cloudbase.init({ env: CLOUDBASE_ENV_ID });
-      const auth = tcbApp.auth();
-      await auth.anonymousAuthProvider().signIn();
-      authReady = true;
-      console.log('CloudBase 初始化成功，匿名登录已就绪');
-      return true;
-    } catch (e) {
-      console.warn('CloudBase 初始化失败，使用本地存储模式:', e.message);
-      useLocalStorage = true;
-      return false;
-    }
-  }
-
-  // 统一 API 调用
-  async function callAPI(action, data) {
-    // 优先使用 CloudBase
-    if (authReady && tcbApp) {
-      try {
-        const result = await tcbApp.callFunction({ name: 'survey', data: { action, data } });
-        return result.result;
-      } catch (e) {
-        console.error('云函数调用失败，切换到本地存储:', e);
-        useLocalStorage = true;
-      }
-    }
-
-    // 尝试本地 Express API
-    try {
-      const routes = {
-        submit: { method: 'POST', url: '/api/surveys' },
-        list:   { method: 'GET',  url: '/api/surveys' },
-        stats:  { method: 'GET',  url: '/api/surveys/stats' },
-        delete: { method: 'DELETE', url: '/api/surveys/' + (data ? data.id : '') },
-        clear:  { method: 'DELETE', url: '/api/surveys' },
-      };
-      const route = routes[action];
-      if (!route) throw new Error('Unknown action: ' + action);
-      const opts = { method: route.method, headers: { 'Content-Type': 'application/json' } };
-      if (action === 'submit') opts.body = JSON.stringify(data);
-      const res = await fetch(route.url, opts);
-      if (res.ok) return res.json();
-      throw new Error('Express API 返回错误: ' + res.status);
-    } catch (e) {
-      console.warn('Express API 不可用，切换到本地存储:', e.message);
-    }
-
-    // localStorage 回退方案
-    return localAPI(action, data);
-  }
-
-  // localStorage API 实现
-  function localAPI(action, data) {
-    const STORAGE_KEY = 'ai_survey_data';
-    function getAll() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-    }
-    function saveAll(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
-
-    switch (action) {
-      case 'submit': {
-        const all = getAll();
-        const record = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), submittedAt: new Date().toISOString() };
-        all.push(record);
-        saveAll(all);
-        return { success: true, data: record };
-      }
-      case 'list': {
-        return { success: true, data: getAll() };
-      }
-      case 'stats': {
-        const all = getAll();
-        const today = new Date().toISOString().slice(0, 10);
-        const byIndustry = {};
-        all.forEach(d => { if (d.industry) byIndustry[d.industry] = (byIndustry[d.industry] || 0) + 1; });
-        return { success: true, data: { total: all.length, today: all.filter(d => d.submittedAt && d.submittedAt.startsWith(today)).length, byIndustry } };
-      }
-      case 'delete': {
-        let all = getAll();
-        all = all.filter(d => (d._id || d.id) !== (data && data.id));
-        saveAll(all);
-        return { success: true };
-      }
-      case 'clear': {
-        saveAll([]);
-        return { success: true };
-      }
-      default:
-        return { success: false, error: 'Unknown action' };
-    }
-  }
 
   // 动态生成评分行
   function buildRatingRows(containerId, scenes) {
@@ -173,7 +75,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // 验证
+  // 验证当前步骤
   function validateStep(step) {
     const section = document.querySelector(`.form-section[data-step="${step}"]`);
     let valid = true;
@@ -253,7 +155,7 @@
     });
   }
 
-  // 收集数据
+  // 收集表单数据
   function collectData() {
     const data = {};
     const form = document.getElementById('surveyForm');
@@ -275,12 +177,12 @@
     return data;
   }
 
-  // 提交
+  // 提交问卷
   async function submitSurvey() {
     if (!validateStep(currentStep)) return;
     const data = collectData();
     try {
-      const result = await callAPI('submit', data);
+      const result = await SurveyAPI.callAPI('submit', data);
       if (result.success) {
         document.getElementById('successModal').classList.add('show');
       } else {
@@ -293,10 +195,7 @@
 
   // 初始化
   async function init() {
-    await initCloudBase();
-    if (useLocalStorage) {
-      console.log('使用本地存储模式（数据保存在浏览器中）');
-    }
+    await SurveyAPI.init();
     buildRatingRows('railRatings', railScenes);
     buildRatingRows('energyRatings', energyScenes);
     buildStepNav();

@@ -1,10 +1,7 @@
 let allData = [];
 let currentPage = 1;
 const PAGE_SIZE = 15;
-let tcbApp = null;
-let authReady = false;
 let adminPwd = '';
-let useLocalStorage = false;
 
 const FIELD_LABELS = {
   companyName: '单位名称', industry: '所属行业', railSub: '轨道交通细分', energySub: '新能源细分',
@@ -29,133 +26,21 @@ const RATING_LABELS = {
   energy_edgeComm: '新能源-边缘通信一体化'
 };
 
-async function initCloudBase() {
-  if (typeof cloudbase === 'undefined' || typeof CLOUDBASE_ENV_ID === 'undefined' || CLOUDBASE_ENV_ID === 'your-env-id') {
-    useLocalStorage = true;
-    return false;
-  }
-  try {
-    tcbApp = cloudbase.init({ env: CLOUDBASE_ENV_ID });
-    const auth = tcbApp.auth();
-    await auth.anonymousAuthProvider().signIn();
-    authReady = true;
-    return true;
-  } catch (e) {
-    console.warn('CloudBase 初始化失败，使用本地存储:', e.message);
-    useLocalStorage = true;
-    return false;
-  }
-}
-
-// localStorage API
-function localAPI(action, data) {
-  const STORAGE_KEY = 'ai_survey_data';
-  function getAll() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-  }
-  function saveAll(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
-
-  switch (action) {
-    case 'submit': {
-      const all = getAll();
-      const record = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), submittedAt: new Date().toISOString() };
-      all.push(record);
-      saveAll(all);
-      return { success: true, data: record };
-    }
-    case 'list':
-      return { success: true, data: getAll() };
-    case 'stats': {
-      const all = getAll();
-      const today = new Date().toISOString().slice(0, 10);
-      const byIndustry = {};
-      all.forEach(d => { if (d.industry) byIndustry[d.industry] = (byIndustry[d.industry] || 0) + 1; });
-      return { success: true, data: { total: all.length, today: all.filter(d => d.submittedAt && d.submittedAt.startsWith(today)).length, byIndustry } };
-    }
-    case 'delete': {
-      let all = getAll();
-      all = all.filter(d => (d._id || d.id) !== (data && data.id));
-      saveAll(all);
-      return { success: true };
-    }
-    case 'clear':
-      saveAll([]);
-      return { success: true };
-    case 'export': {
-      const all = getAll();
-      if (all.length === 0) return { success: false, error: '暂无数据' };
-      const allKeys = new Set();
-      all.forEach(d => Object.keys(d).forEach(k => allKeys.add(k)));
-      const keys = [...allKeys];
-      let csv = '\uFEFF' + keys.join(',') + '\n';
-      all.forEach(d => {
-        csv += keys.map(k => {
-          let v = d[k];
-          if (Array.isArray(v)) v = v.join(';');
-          if (v === undefined || v === null) v = '';
-          return '"' + String(v).replace(/"/g, '""') + '"';
-        }).join(',') + '\n';
-      });
-      return { success: true, csv, filename: 'survey_export_' + new Date().toISOString().slice(0, 10) + '.csv' };
-    }
-    default:
-      return { success: false, error: 'Unknown action' };
-  }
-}
-
-async function callAPI(action, data) {
-  if (authReady && tcbApp) {
-    try {
-      const result = await tcbApp.callFunction({ name: 'survey', data: { action, data, adminPwd } });
-      return result.result;
-    } catch (e) {
-      console.warn('云函数调用失败，切换本地存储:', e.message);
-      useLocalStorage = true;
-    }
-  }
-
-  if (!useLocalStorage) {
-    try {
-      const routes = {
-        submit: { method: 'POST', url: '/api/surveys' },
-        list:   { method: 'GET',  url: '/api/surveys' },
-        stats:  { method: 'GET',  url: '/api/surveys/stats' },
-        delete: { method: 'DELETE', url: '/api/surveys/' + (data ? data.id : '') },
-        clear:  { method: 'DELETE', url: '/api/surveys' },
-        export: { method: 'GET',  url: '/api/surveys/export/csv' },
-      };
-      const route = routes[action];
-      if (!route) throw new Error('Unknown action');
-      const opts = { method: route.method, headers: { 'Content-Type': 'application/json' } };
-      if (action === 'submit') opts.body = JSON.stringify(data);
-      const res = await fetch(route.url, opts);
-      if (res.ok) return res.json();
-      throw new Error('Express API 返回错误: ' + res.status);
-    } catch (e) {
-      console.warn('Express API 不可用，切换到本地存储:', e.message);
-    }
-  }
-
-  return localAPI(action, data);
-}
-
 // 管理员登录
 async function doLogin() {
   const pwd = document.getElementById('adminPwdInput').value.trim();
   if (!pwd) return;
   adminPwd = pwd;
   try {
-    if (authReady && tcbApp) {
-      const result = await tcbApp.callFunction({ name: 'survey', data: { action: 'verifyAdmin', adminPwd: pwd } });
-      if (result.result && result.result.success) {
-        showAdmin();
-      } else {
-        showLoginError();
-      }
+    // 通过远端 API 验证
+    const result = await SurveyAPI.callAPI('verifyAdmin', { adminPwd: pwd });
+    if (result.success) {
+      showAdmin();
     } else {
-      if (pwd === 'zx2024ai') { showAdmin(); } else { showLoginError(); }
+      showLoginError();
     }
   } catch (e) {
+    // 回退到本地密码验证
     if (pwd === 'zx2024ai') { showAdmin(); } else { showLoginError(); }
   }
 }
@@ -179,7 +64,7 @@ document.getElementById('adminPwdInput').addEventListener('keydown', function(e)
 
 async function loadStats() {
   try {
-    const json = await callAPI('stats');
+    const json = await SurveyAPI.callAPI('stats', { adminPwd: adminPwd });
     if (!json.success) return;
     const s = json.data;
     document.getElementById('statTotal').textContent = s.total;
@@ -191,7 +76,7 @@ async function loadStats() {
 
 async function loadData() {
   try {
-    const json = await callAPI('list');
+    const json = await SurveyAPI.callAPI('list', { adminPwd: adminPwd });
     if (!json.success) {
       if (json.error === '管理员密码错误') { alert('登录已过期，请重新登录'); location.reload(); }
       return;
@@ -224,12 +109,19 @@ function renderTable() {
   tbody.innerHTML = pageData.map((d, i) => {
     const idx = start + i + 1;
     const tag = d.industry === '轨道交通' ? 'tag-rail' : d.industry === '新能源' ? 'tag-energy' : '';
+    // 处理数组字段（兼容多种格式）
+    function parseArr(val) {
+      if (Array.isArray(val)) return val.join(', ');
+      if (typeof val === 'string' && val.indexOf('|') >= 0) return val.split('|').join(', ');
+      return val || '-';
+    }
+    const dept = parseArr(d.department);
     const rowId = d._id || d.id || '';
     return `<tr>
       <td>${idx}</td>
       <td title="${d.companyName || ''}">${d.companyName || '-'}</td>
       <td><span class="tag ${tag}">${d.industry || '-'}</span></td>
-      <td>${Array.isArray(d.department) ? d.department.join(', ') : (d.department || '-')}</td>
+      <td>${dept}</td>
       <td>${d.aiDeployment || '-'}</td>
       <td>${d.budget || '-'}</td>
       <td>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('zh-CN') : '-'}</td>
@@ -239,6 +131,7 @@ function renderTable() {
       </td>
     </tr>`;
   }).join('');
+
   const pg = document.getElementById('pagination');
   let pgHtml = `<button ${currentPage <= 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">上一页</button>`;
   for (let p = 1; p <= totalPages; p++) {
@@ -258,6 +151,11 @@ function filterData() { currentPage = 1; renderTable(); }
 function viewDetail(id) {
   const d = allData.find(x => (x._id || x.id) === id);
   if (!d) return;
+  function parseArr(val) {
+    if (Array.isArray(val)) return val.join('；');
+    if (typeof val === 'string' && val.indexOf('|') >= 0) return val.split('|').join('；');
+    return val;
+  }
   const grid = document.getElementById('detailGrid');
   let html = '';
   const sections = [
@@ -273,8 +171,7 @@ function viewDetail(id) {
     html += `<div class="detail-item full"><div class="dk" style="font-weight:700;color:#4F46E5;font-size:14px">${sec.title}</div></div>`;
     sec.keys.forEach(k => {
       if (d[k] === undefined || d[k] === null || d[k] === '') return;
-      let val = d[k];
-      if (Array.isArray(val)) val = val.join('；');
+      let val = parseArr(d[k]);
       const label = RATING_LABELS[k] || FIELD_LABELS[k] || k;
       const isLong = String(val).length > 40;
       html += `<div class="detail-item${isLong ? ' full' : ''}"><div class="dk">${label}</div><div class="dv">${val}</div></div>`;
@@ -289,17 +186,17 @@ function closeModal() { document.getElementById('detailModal').classList.remove(
 
 async function deleteOne(id) {
   if (!confirm('确定删除此条记录？')) return;
-  try { await callAPI('delete', { id }); loadData(); } catch (e) { alert('删除失败'); }
+  try { await SurveyAPI.callAPI('delete', { id: id, adminPwd: adminPwd }); loadData(); } catch (e) { alert('删除失败'); }
 }
 
 async function clearAll() {
   if (!confirm('确定清空所有数据？此操作不可恢复！')) return;
-  try { await callAPI('clear'); loadData(); } catch (e) { alert('操作失败'); }
+  try { await SurveyAPI.callAPI('clear', { adminPwd: adminPwd }); loadData(); } catch (e) { alert('操作失败'); }
 }
 
 async function exportCSV() {
   try {
-    const result = await callAPI('export');
+    const result = await SurveyAPI.callAPI('export', { adminPwd: adminPwd });
     if (!result.success) { alert(result.error || '导出失败'); return; }
     const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -312,4 +209,4 @@ async function exportCSV() {
 document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 // 初始化
-(async function() { await initCloudBase(); })();
+(async function() { await SurveyAPI.init(); })();
